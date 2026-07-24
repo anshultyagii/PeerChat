@@ -25,6 +25,6 @@ export const googleProvider = new GoogleAuthProvider();
 // reset link in their email. Point it at a route in THIS app so the
 // reset happens inside our own UI instead of Firebase's hosted page.
 export const actionCodeSettings = {
-  url: `${window.location.origin}/reset-password`,
+  url: `${window.location.origin}${window.location.pathname}#/reset-password`,
   handleCodeInApp: true,
 };

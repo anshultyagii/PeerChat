@@ -422,7 +422,7 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
               <DropdownMenuContent side="top" align="start" className="w-56 bg-[#1e1e1e]/95 text-white border-white/10 backdrop-blur-xl">
                 <DropdownMenuLabel className="font-mono text-xs text-muted-foreground">@{currentUser.username}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => window.open('/private', '_blank')}>
+                <DropdownMenuItem onClick={() => window.open(window.location.origin + window.location.pathname + '#/private', '_blank')}>
                   <Shield className="w-4 h-4 mr-2 text-emerald-400" /> Start Private Chat
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
