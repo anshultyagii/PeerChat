@@ -33,6 +33,32 @@ export default function ProfileModal({
   const [profilePic, setProfilePic] = useState<string | null>(currentUser.profilePic);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    localStorage.getItem('notificationsEnabled') === 'true' && Notification.permission === 'granted'
+  );
+
+  const handleToggleNotifications = async () => {
+    if (notificationsEnabled) {
+      localStorage.setItem('notificationsEnabled', 'false');
+      setNotificationsEnabled(false);
+      toast.success("Notifications disabled");
+    } else {
+      if (!("Notification" in window)) {
+        toast.error("This browser does not support desktop notifications");
+        return;
+      }
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        localStorage.setItem('notificationsEnabled', 'true');
+        setNotificationsEnabled(true);
+        new Notification("Notifications Enabled", {
+          body: "You will now receive desktop notifications for new messages.",
+        });
+      } else {
+        toast.error("Notification permission denied");
+      }
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -114,6 +140,19 @@ export default function ProfileModal({
             </div>
 
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone number" className={`${inputStyles} ${inputOk} w-full`} />
+
+            <div className="w-full bg-white/5 border border-white/10 rounded-[14px] p-[16px] flex items-center justify-between">
+              <div className="flex flex-col text-left">
+                <span className="text-[14px] font-semibold text-white">Browser Notifications</span>
+                <span className="text-[11px] text-[#a3a3a3]">Receive alerts when new messages arrive</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={notificationsEnabled}
+                onChange={handleToggleNotifications}
+                className="w-5 h-5 accent-emerald-500 rounded cursor-pointer"
+              />
+            </div>
 
             <button type="button" onClick={handleSave} disabled={saving} className={`${primaryBtnStyles} flex items-center justify-center gap-2`}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <><CheckCircle2 className="w-4 h-4" /> Saved</> : "Save changes"}

@@ -201,11 +201,11 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
               {/* Connecting WebRTC Line */}
               <div className="md:col-span-4 flex flex-col items-center justify-center py-2 md:py-0">
-                <div className="w-full relative flex items-center justify-center my-1">
+                <div className="w-[2px] h-12 md:w-full md:h-[2px] relative flex items-center justify-center my-2 md:my-1">
                   {/* Glowing Connection Link Line */}
-                  <div className="w-full h-[2px] bg-gradient-to-r from-emerald-500 via-cyan-400 to-emerald-500 rounded-full" />
+                  <div className="w-[2px] h-full md:w-full md:h-[2px] bg-gradient-to-b md:bg-gradient-to-r from-emerald-500 via-cyan-400 to-emerald-500 rounded-full" />
                   {/* Moving Packet Dot */}
-                  <div className="absolute w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee] animate-[ping_1.5s_infinite]" />
+                  <div className="absolute w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee] animate-[ping_1.5s_infinite] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                 </div>
                 <span className="text-[10px] text-neutral-500 font-mono mt-1 text-center font-bold tracking-wide">WEBRTC DATA CHANNEL</span>
                 <span className="text-[9px] text-emerald-400 font-mono bg-emerald-500/5 px-2 py-0.5 rounded-full border border-emerald-500/10 mt-1">E2EE ACTIVE</span>

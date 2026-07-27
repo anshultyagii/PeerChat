@@ -24,10 +24,11 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { Send, Plus, MessageSquare, Settings, LogOut, ChevronsUpDown, Trash2, UserMinus, Smile, Clock, Shield, Home } from 'lucide-react';
+import { Send, Plus, MessageSquare, Settings, LogOut, ChevronsUpDown, Trash2, UserMinus, Smile, Clock, Shield, Home, Phone, PhoneOff, Video } from 'lucide-react';
 import AddContactDialog from './AddContactDialog';
 import ProfileModal from './ProfileModal';
 import EmojiPicker from './EmojiPicker';
+import CallModal from './CallModal';
 import { toast } from 'sonner';
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
@@ -44,7 +45,22 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
   const [confirmClearChatContact, setConfirmClearChatContact] = useState<Contact | null>(null);
   const [confirmRemoveContact, setConfirmRemoveContact] = useState<Contact | null>(null);
   const [activeEmojiPickerMsgId, setActiveEmojiPickerMsgId] = useState<string | null>(null);
+  const [showInputEmojiPicker, setShowInputEmojiPicker] = useState(false);
   const [liveProfiles, setLiveProfiles] = useState<Record<string, { firstName?: string; lastName?: string; profilePic?: string | null }>>({});
+  const [incomingCall, setIncomingCall] = useState<{
+    callerId: string;
+    callerName: string;
+    callerUsername: string;
+    type: 'voice' | 'video';
+    roomId: string;
+  } | null>(null);
+  const [activeCall, setActiveCall] = useState<{
+    targetUserId: string;
+    targetUsername: string;
+    isCaller: boolean;
+    type: 'voice' | 'video';
+    roomId: string;
+  } | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -89,6 +105,25 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
     return unsubscribe;
   }, [currentUser.uid]);
 
+  // Listen for incoming calls
+  useEffect(() => {
+    const userCallRef = ref(rtdb, `userCalls/${currentUser.uid}`);
+    const unsubscribe = onValue(userCallRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const call = snapshot.val();
+        if (call.status === 'ringing') {
+          setIncomingCall(call);
+        } else {
+          setIncomingCall(null);
+        }
+      } else {
+        setIncomingCall(null);
+      }
+    });
+
+    return unsubscribe;
+  }, [currentUser.uid]);
+
   // Load messages for the active conversation
   useEffect(() => {
     if (!activeContact) {
@@ -115,6 +150,21 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
           .filter((msg) => !msg.deletedFor?.[currentUser.uid]);
 
         loaded.sort((a, b) => a.timestamp - b.timestamp);
+
+        // Notification trigger on incoming messages
+        if (loaded.length > 0) {
+          const lastMsg = loaded[loaded.length - 1];
+          if (lastMsg.sender === 'them' && lastMsg.timestamp > Date.now() - 3000) {
+            if (localStorage.getItem('notificationsEnabled') === 'true' && Notification.permission === 'granted' && document.hidden) {
+              const display = getContactDisplay(activeContact);
+              new Notification(`${display.firstName} ${display.lastName}`, {
+                body: lastMsg.text,
+                icon: display.profilePic || undefined,
+              });
+            }
+          }
+        }
+
         setMessages(loaded);
       } else {
         setMessages([]);
@@ -179,6 +229,53 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
     } catch {
       toast.error("Couldn't remove contact");
     }
+  };
+
+  const startCall = (type: 'voice' | 'video') => {
+    if (!activeContact) return;
+    const chatRoomId = getChatRoomId(currentUser.username, activeContact.username);
+    
+    setActiveCall({
+      targetUserId: activeContact.uid,
+      targetUsername: activeContact.username,
+      isCaller: true,
+      type,
+      roomId: chatRoomId,
+    });
+
+    set(ref(rtdb, `userCalls/${activeContact.uid}`), {
+      callerId: currentUser.uid,
+      callerName: `${currentUser.firstName} ${currentUser.lastName}`,
+      callerUsername: currentUser.username,
+      type,
+      roomId: chatRoomId,
+      status: 'ringing',
+    }).catch(err => console.error("Error setting caller notification:", err));
+  };
+
+  const acceptCall = () => {
+    if (!incomingCall) return;
+    const call = incomingCall;
+    
+    set(ref(rtdb, `userCalls/${currentUser.uid}`), null);
+    setIncomingCall(null);
+
+    setActiveCall({
+      targetUserId: call.callerId,
+      targetUsername: call.callerUsername,
+      isCaller: false,
+      type: call.type,
+      roomId: call.roomId,
+    });
+  };
+
+  const rejectCall = () => {
+    if (!incomingCall) return;
+    const call = incomingCall;
+    
+    update(ref(rtdb, `calls/${call.roomId}`), { status: 'rejected' });
+    set(ref(rtdb, `userCalls/${currentUser.uid}`), null);
+    setIncomingCall(null);
   };
 
   const handleDeleteChat = async (contact: Contact) => {
@@ -334,7 +431,7 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
   return (
     <SidebarProvider className="h-svh min-h-svh bg-[#050505] text-white">
       <div className="flex h-svh w-full overflow-hidden bg-[#1e1e1e]/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-[24px]">
-        <Sidebar collapsible="icon" className="border-r border-white/10 bg-black/20">
+        <Sidebar collapsible="icon" className="border-r border-white/10 bg-black/20" onClick={(e) => e.stopPropagation()}>
           {/* Header height set to h-16 (64px) to align divider with main chat header */}
           <SidebarHeader className="h-16 px-4 border-b border-white/10 flex items-center justify-between shrink-0">
             <div className="flex items-center justify-between gap-2 w-full">
@@ -443,23 +540,47 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
 
         <main className="flex-1 flex flex-col min-w-0 bg-black/20">
           {/* Main header height set to h-16 (64px) to align divider perfectly with sidebar header */}
-          <header className="h-16 px-4 border-b border-white/10 flex items-center gap-3 bg-black/20 shrink-0 z-10">
-            <SidebarTrigger />
-            {activeContact && activeDisplay ? (
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarImage src={activeDisplay.profilePic || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary font-mono">
-                    {activeDisplay.firstName[0]}{activeDisplay.lastName?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h2 className="text-base font-bold">{activeDisplay.firstName} {activeDisplay.lastName}</h2>
-                  <p className="text-xs text-muted-foreground font-mono font-medium">@{activeContact.username}</p>
+          <header className="h-16 px-4 border-b border-white/10 flex items-center justify-between bg-black/20 shrink-0 z-10">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger />
+              {activeContact && activeDisplay ? (
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarImage src={activeDisplay.profilePic || undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-mono">
+                      {activeDisplay.firstName[0]}{activeDisplay.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h2 className="text-base font-bold">{activeDisplay.firstName} {activeDisplay.lastName}</h2>
+                    <p className="text-xs text-muted-foreground font-mono font-medium">@{activeContact.username}</p>
+                  </div>
                 </div>
+              ) : (
+                <div className="text-sm text-muted-foreground">Select a chat to get started</div>
+              )}
+            </div>
+            {activeContact && activeDisplay && (
+              <div className="flex items-center gap-2">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => startCall('voice')}
+                  className="rounded-full text-muted-foreground hover:text-white hover:bg-white/10 cursor-pointer"
+                  title="Voice Call"
+                >
+                  <Phone className="w-[18px] h-[18px]" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => startCall('video')}
+                  className="rounded-full text-muted-foreground hover:text-white hover:bg-white/10 cursor-pointer"
+                  title="Video Call"
+                >
+                  <Video className="w-[18px] h-[18px]" />
+                </Button>
               </div>
-            ) : (
-              <div className="text-sm text-muted-foreground">Select a chat to get started</div>
             )}
           </header>
 
@@ -575,7 +696,35 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
           </ScrollArea>
 
           <footer className="p-4 border-t border-white/10 bg-black/20 shrink-0">
-            <form onSubmit={sendMessage} className="flex gap-2 max-w-4xl mx-auto">
+            <form onSubmit={sendMessage} className="flex gap-2 max-w-4xl mx-auto items-center relative">
+              <div className="relative flex items-center">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  disabled={!activeContact}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowInputEmojiPicker(!showInputEmojiPicker);
+                  }}
+                  className="rounded-full h-10 w-10 shrink-0 text-muted-foreground hover:text-white hover:bg-white/10 cursor-pointer"
+                >
+                  <Smile className="w-5 h-5" />
+                </Button>
+                {showInputEmojiPicker && (
+                  <div
+                    className="absolute bottom-12 left-0 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <EmojiPicker
+                      onSelect={(emoji) => {
+                        setMessageInput((prev) => prev + emoji);
+                      }}
+                      onClose={() => setShowInputEmojiPicker(false)}
+                    />
+                  </div>
+                )}
+              </div>
               <Input
                 placeholder={activeContact ? "Type your message..." : "Select a chat to start typing..."}
                 value={messageInput}
@@ -701,6 +850,64 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
         onOpenChange={setProfileOpen}
         onProfileUpdated={(updated) => setCurrentUser(updated)}
       />
+      {/* Incoming Call Ringing Overlay */}
+      {incomingCall && (
+        <div className="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-black/90 text-white p-6 font-sans">
+          <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 via-[#0c0c0e] to-cyan-500/5 pointer-events-none" />
+          <div className="flex flex-col items-center justify-center gap-6 my-12 animate-bounce">
+            <Avatar className="h-32 w-32 ring-8 ring-emerald-500/20">
+              <AvatarFallback className="text-4xl bg-white/10">{incomingCall.callerName[0]}</AvatarFallback>
+            </Avatar>
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl font-extrabold">{incomingCall.callerName}</h2>
+              <p className="text-sm text-muted-foreground font-mono">@{incomingCall.callerUsername}</p>
+              <span className="inline-block mt-3 text-xs bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full font-bold uppercase tracking-wider animate-pulse">
+                Incoming {incomingCall.type} Call...
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6 z-30">
+            <Button
+              onClick={acceptCall}
+              className="h-14 px-8 rounded-full bg-emerald-500 hover:bg-emerald-600 text-black font-bold flex items-center gap-2 cursor-pointer shadow-lg"
+            >
+              <Phone className="w-5 h-5 animate-pulse" /> Accept
+            </Button>
+            <Button
+              onClick={rejectCall}
+              variant="destructive"
+              className="h-14 px-8 rounded-full bg-[#ff4d4d] hover:bg-[#ff3333] text-white font-bold flex items-center gap-2 cursor-pointer shadow-lg"
+            >
+              <PhoneOff className="w-5 h-5" /> Reject
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Active Call Modal */}
+      {activeCall && (
+        <CallModal
+          currentUserId={currentUser.uid}
+          currentUsername={currentUser.username}
+          currentUserDisplay={getContactDisplay(currentUser)}
+          targetUserId={activeCall.targetUserId}
+          targetUsername={activeCall.targetUsername}
+          targetUserDisplay={
+            activeCall.isCaller
+              ? getContactDisplay(activeContact!)
+              : {
+                  firstName: incomingCall?.callerName.split(' ')[0] || 'User',
+                  lastName: incomingCall?.callerName.split(' ').slice(1).join(' ') || '',
+                  profilePic: null,
+                }
+          }
+          roomId={activeCall.roomId}
+          isCaller={activeCall.isCaller}
+          callType={activeCall.type}
+          onClose={() => setActiveCall(null)}
+        />
+      )}
     </SidebarProvider>
   );
 }
