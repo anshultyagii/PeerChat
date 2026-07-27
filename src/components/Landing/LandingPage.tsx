@@ -142,12 +142,14 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             >
               Start Direct Chat
             </button>
-            <a 
-              href="#features"
-              className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white hover:bg-white/10 font-semibold text-base transition-all duration-300 text-center flex items-center justify-center gap-2 group"
+            <button 
+              onClick={() => {
+                window.location.hash = "/private";
+              }}
+              className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white hover:bg-white/10 font-semibold text-base transition-all duration-300 text-center flex items-center justify-center gap-2 group cursor-pointer"
             >
-              Explore Tech <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </a>
+              <Shield className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" /> Start Private Chat
+            </button>
           </div>
 
           {/* Quick Metrics */}
