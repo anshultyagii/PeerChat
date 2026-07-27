@@ -9,6 +9,7 @@ function Router() {
     <HashRouter>
       <Routes>
         <Route path="/" element={<App />} />
+        <Route path="/auth" element={<App />} />
         <Route path="/private" element={<App />} />
         <Route path="/reset-password" element={<App />} />
       </Routes>
