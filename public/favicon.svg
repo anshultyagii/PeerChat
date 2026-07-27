@@ -1,3 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Solid black background -->
+  <rect width="512" height="512" fill="#000000"/>
+  <!-- Glowing green chat bubble icon in the center -->
+  <path d="M384 272c0 61.856-50.144 112-112 112H192l-64 64V160c0-61.856 50.144-112 112-112h144c61.856 0 112 50.144 112 112v112z" fill="#10b981"/>
+  <!-- White detail stroke -->
+  <path d="M224 208h96M224 272h64" stroke="#ffffff" stroke-width="24" stroke-linecap="round"/>
 </svg>
