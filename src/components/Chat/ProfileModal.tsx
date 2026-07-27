@@ -99,7 +99,10 @@ export default function ProfileModal({
 
       setSaved(true);
       toast.success("Profile updated successfully");
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => {
+        setSaved(false);
+        onOpenChange(false);
+      }, 800);
     } catch (err) {
       console.error("Error updating profile:", err);
       toast.error("Couldn't update profile", { description: "Please try again." });

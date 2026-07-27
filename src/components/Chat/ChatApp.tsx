@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarGroup,
   SidebarGroupLabel, SidebarGroupContent, SidebarFooter, SidebarMenu,
-  SidebarMenuItem, SidebarMenuButton, SidebarTrigger,
+  SidebarMenuItem, SidebarMenuButton, SidebarTrigger, useSidebar,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -32,6 +32,43 @@ import CallModal from './CallModal';
 import { toast } from 'sonner';
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+function ContactMenuItemButton({ 
+  contact, 
+  activeContact, 
+  setActiveContact, 
+  display 
+}: { 
+  contact: Contact; 
+  activeContact: Contact | null; 
+  setActiveContact: (contact: Contact) => void; 
+  display: any;
+}) {
+  const { isMobile, setOpenMobile } = useSidebar();
+  return (
+    <SidebarMenuButton
+      isActive={activeContact?.uid === contact.uid}
+      onClick={() => {
+        setActiveContact(contact);
+        if (isMobile) {
+          setOpenMobile(false);
+        }
+      }}
+      className="h-auto py-2"
+    >
+      <Avatar className="h-8 w-8 shrink-0">
+        <AvatarImage src={display.profilePic || undefined} />
+        <AvatarFallback className="text-xs">{display.firstName[0]}{display.lastName?.[0]}</AvatarFallback>
+      </Avatar>
+      <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
+        <span className="text-sm font-medium truncate">{display.firstName} {display.lastName}</span>
+        <span className="text-xs text-muted-foreground truncate">
+          {contact.lastMessage || `@${contact.username}`}
+        </span>
+      </div>
+    </SidebarMenuButton>
+  );
+}
 
 export default function ChatApp({ currentUser: initialUser }: { currentUser: UserProfile }) {
   const [currentUser, setCurrentUser] = useState<UserProfile>(initialUser);
@@ -467,23 +504,12 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
                       <SidebarMenuItem key={contact.uid}>
                         <ContextMenu>
                           <ContextMenuTrigger asChild>
-                            <SidebarMenuButton
-                              isActive={activeContact?.uid === contact.uid}
-                              onClick={() => setActiveContact(contact)}
-                              closeMobileOnClick
-                              className="h-auto py-2"
-                            >
-                              <Avatar className="h-8 w-8 shrink-0">
-                                <AvatarImage src={display.profilePic || undefined} />
-                                <AvatarFallback className="text-xs">{display.firstName[0]}{display.lastName?.[0]}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
-                                <span className="text-sm font-medium truncate">{display.firstName} {display.lastName}</span>
-                                <span className="text-xs text-muted-foreground truncate">
-                                  {contact.lastMessage || `@${contact.username}`}
-                                </span>
-                              </div>
-                            </SidebarMenuButton>
+                            <ContactMenuItemButton
+                              contact={contact}
+                              activeContact={activeContact}
+                              setActiveContact={setActiveContact}
+                              display={display}
+                            />
                           </ContextMenuTrigger>
                           <ContextMenuContent className="w-52 bg-[#1e1e1e]/95 text-white border-white/10 backdrop-blur-xl">
                             <ContextMenuItem onClick={() => setConfirmClearChatContact(contact)} variant="destructive">
