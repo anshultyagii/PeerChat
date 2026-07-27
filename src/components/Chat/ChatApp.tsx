@@ -422,7 +422,7 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
               <DropdownMenuContent side="top" align="start" className="w-56 bg-[#1e1e1e]/95 text-white border-white/10 backdrop-blur-xl">
                 <DropdownMenuLabel className="font-mono text-xs text-muted-foreground">@{currentUser.username}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { window.location.hash = ''; window.location.reload(); }}>
+                <DropdownMenuItem onClick={() => { window.location.hash = ''; }}>
                   <Home className="w-4 h-4 mr-2 text-cyan-400" /> Home Page
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

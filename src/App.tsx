@@ -62,20 +62,18 @@ export default function App() {
   const [onboardingUser, setOnboardingUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
-  const isAuthRoute = window.location.pathname.includes('auth') || window.location.hash.includes('auth');
-  const [showAuth, setShowAuth] = useState(isAuthRoute);
+  const [hash, setHash] = useState(window.location.hash);
 
   useEffect(() => {
     const handleHashChange = () => {
-      if (window.location.hash.includes('auth')) {
-        setShowAuth(true);
-      } else if (window.location.hash === '' || window.location.hash === '#/' || window.location.hash === '#') {
-        setShowAuth(false);
-      }
+      setHash(window.location.hash);
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  const isChatRoute = hash.includes('chat');
+  const isAuthRoute = hash.includes('auth');
 
   // Detect password-reset deep link
   const resetOobCode = params.get('mode') === 'resetPassword' ? params.get('oobCode') : null;
@@ -236,11 +234,17 @@ export default function App() {
           }}
         />
       ) : currentUser ? (
-        <ChatApp currentUser={currentUser} />
-      ) : showAuth ? (
-        <AuthScreen onClose={() => { setShowAuth(false); window.location.hash = ''; }} />
+        isChatRoute ? (
+          <ChatApp currentUser={currentUser} />
+        ) : isAuthRoute ? (
+          <ChatApp currentUser={currentUser} />
+        ) : (
+          <LandingPage onStart={() => { window.location.hash = '/chat'; }} />
+        )
+      ) : isAuthRoute ? (
+        <AuthScreen onClose={() => { window.location.hash = ''; }} />
       ) : (
-        <LandingPage onStart={() => setShowAuth(true)} />
+        <LandingPage onStart={() => { window.location.hash = '/auth'; }} />
       )}
       <Toaster position="bottom-right" />
     </>
