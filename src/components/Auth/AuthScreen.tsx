@@ -7,7 +7,7 @@ import { X } from 'lucide-react';
 
 type View = 'signup' | 'signin' | 'forgot';
 
-export default function AuthScreen({ resetOobCode }: { resetOobCode?: string | null }) {
+export default function AuthScreen({ resetOobCode, onClose }: { resetOobCode?: string | null; onClose?: () => void }) {
   const [view, setView] = useState<View>('signup');
 
   const title =
@@ -22,9 +22,14 @@ export default function AuthScreen({ resetOobCode }: { resetOobCode?: string | n
       <div className="relative z-10 bg-[#1e1e1e]/40 backdrop-blur-[24px] border border-white/10 rounded-[28px] p-[40px] w-full max-w-[480px] max-h-[95vh] overflow-y-auto shadow-[0_30px_60px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.1)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
         {/* Close Button */}
-        <button className="absolute top-5 right-5 bg-white/10 border-none text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">
-          <X className="w-5 h-5" />
-        </button>
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="absolute top-5 right-5 bg-white/10 border-none text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
 
         {resetOobCode ? (
           <>

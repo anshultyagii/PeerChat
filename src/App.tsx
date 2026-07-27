@@ -5,6 +5,7 @@ import { auth, db } from '@/lib/firebase';
 import { UserProfile } from '@/types';
 import { cacheUserProfile, getCachedUserProfile, syncUsernameMapping } from '@/lib/utils/auth';
 import AuthScreen from '@/components/Auth/AuthScreen';
+import LandingPage from '@/components/Landing/LandingPage';
 import GoogleOnboarding from '@/components/Auth/GoogleOnboarding';
 import ChatApp from '@/components/Chat/ChatApp';
 import PrivateChatApp from '@/components/Chat/PrivateChatApp';
@@ -61,6 +62,7 @@ export default function App() {
   const [onboardingUser, setOnboardingUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
+  const [showAuth, setShowAuth] = useState(false);
 
   // Detect password-reset deep link
   const resetOobCode = params.get('mode') === 'resetPassword' ? params.get('oobCode') : null;
@@ -222,8 +224,10 @@ export default function App() {
         />
       ) : currentUser ? (
         <ChatApp currentUser={currentUser} />
+      ) : showAuth ? (
+        <AuthScreen onClose={() => setShowAuth(false)} />
       ) : (
-        <AuthScreen />
+        <LandingPage onStart={() => setShowAuth(true)} />
       )}
       <Toaster position="bottom-right" />
     </>
