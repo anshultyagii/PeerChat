@@ -4,15 +4,17 @@ import { defineConfig } from "vite"
 import tailwindcss from "@tailwindcss/vite";
 
 
-export default defineConfig({
-  base: "/PeerChat/",
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+export default defineConfig(({ mode }) => {
+  return {
+    base: mode === "production" ? "/PeerChat/" : "/",
+    plugins: [
+      react(),
+      tailwindcss(),
+    ],
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
     },
-  },
-})
+  };
+});
