@@ -8,12 +8,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarGroup,
   SidebarGroupContent, SidebarFooter, SidebarMenu, SidebarMenuItem,
-  SidebarTrigger,
+  SidebarTrigger, SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { Send, Plus, MessageSquare, Shield, Copy, Check, User } from 'lucide-react';
+import { Send, Plus, MessageSquare, Shield, Copy, Check, User, LogIn, Home, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 const DEFAULT_MAN_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%232a2a2e'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%238e8e93'/%3E%3Cpath d='M20 88 c0 -18 14 -28 30 -28 s30 10 30 28 z' fill='%238e8e93'/%3E%3C/svg%3E";
@@ -253,17 +257,32 @@ export default function PrivateChatApp() {
           </SidebarContent>
 
           <SidebarFooter className="p-3 border-t border-white/10 flex flex-col gap-2">
-            {/* User info: Anonymous */}
-            <div className="flex items-center gap-3 p-1.5 rounded-xl group-data-[collapsible=icon]:justify-center">
-              <Avatar className="h-9 w-9 shrink-0 border border-white/10">
-                <AvatarImage src={DEFAULT_MAN_AVATAR} />
-                <AvatarFallback className="bg-white/10 text-white"><User className="w-4 h-4" /></AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
-                <span className="text-sm font-bold text-white">Anonymous</span>
-                <span className="text-[11px] text-emerald-400 font-mono">Private Peer</span>
-              </div>
-            </div>
+            {/* User info: Anonymous Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton className="h-14 w-full flex items-center gap-3 px-3 rounded-xl hover:bg-white/10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 cursor-pointer">
+                  <Avatar className="h-9 w-9 shrink-0 border border-white/10">
+                    <AvatarImage src={DEFAULT_MAN_AVATAR} />
+                    <AvatarFallback className="bg-white/10 text-white"><User className="w-4 h-4" /></AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0 text-left group-data-[collapsible=icon]:hidden">
+                    <span className="text-sm font-bold text-white leading-tight">Anonymous</span>
+                    <span className="text-[11px] text-emerald-400 font-mono leading-none">Private Peer</span>
+                  </div>
+                  <ChevronsUpDown className="ml-auto w-4 h-4 shrink-0 group-data-[collapsible=icon]:hidden text-muted-foreground" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="start" className="w-56 bg-[#1e1e1e]/95 text-white border-white/10 backdrop-blur-xl">
+                <DropdownMenuLabel className="font-mono text-xs text-muted-foreground">Session Profile</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => { window.location.hash = ''; window.location.reload(); }}>
+                  <Home className="w-4 h-4 mr-2 text-cyan-400" /> Home Page
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { window.location.hash = ''; window.location.reload(); }}>
+                  <LogIn className="w-4 h-4 mr-2 text-emerald-400" /> Login / Sign Up
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Session ID / Peer ID box */}
             <div
