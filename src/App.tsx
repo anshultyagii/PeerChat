@@ -55,7 +55,6 @@ export default function App() {
   const [onboardingUser, setOnboardingUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
-  const isChatRoute = location.pathname === '/chat';
   const isAuthRoute = location.pathname === '/auth';
 
   // Detect password-reset deep link
@@ -224,13 +223,7 @@ export default function App() {
           }}
         />
       ) : currentUser ? (
-        isChatRoute ? (
-          <ChatApp currentUser={currentUser} />
-        ) : isAuthRoute ? (
-          <ChatApp currentUser={currentUser} />
-        ) : (
-          <LandingPage onStart={() => { window.location.hash = '/chat'; }} />
-        )
+        <ChatApp currentUser={currentUser} />
       ) : isAuthRoute ? (
         <AuthScreen onClose={() => { window.location.hash = ''; }} />
       ) : (
