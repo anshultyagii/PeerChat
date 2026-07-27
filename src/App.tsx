@@ -12,6 +12,7 @@ import PrivateChatApp from '@/components/Chat/PrivateChatApp';
 import { Progress } from '@/components/ui/progress';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
+import { useLocation } from 'react-router-dom';
 
 /**
  * Authentication is owned by Firebase Auth; a Firestore profile is app data.
@@ -45,51 +46,31 @@ function isCompleteGoogleProfile(profile: UserProfile | null): profile is UserPr
 }
 
 export default function App() {
-  // Detect private chat session route or parameter
+  const location = useLocation();
+  // The reset link keeps its Firebase parameters in the regular query string.
   const params = new URLSearchParams(window.location.search);
-  const isPrivate = window.location.pathname.includes('private') || params.get('private') === 'true' || window.location.hash.includes('private');
-
-  if (isPrivate) {
-    return (
-      <>
-        <PrivateChatApp />
-        <Toaster position="bottom-right" />
-      </>
-    );
-  }
+  const isPrivate = location.pathname === '/private' || params.get('private') === 'true';
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [onboardingUser, setOnboardingUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
-  const [hash, setHash] = useState(window.location.hash);
-
-  useEffect(() => {
-    const handleHashChange = () => {
-      setHash(window.location.hash);
-    };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  const isChatRoute = hash.includes('chat');
-  const isAuthRoute = hash.includes('auth');
+  const isChatRoute = location.pathname === '/chat';
+  const isAuthRoute = location.pathname === '/auth';
 
   // Detect password-reset deep link
   const resetOobCode = params.get('mode') === 'resetPassword' ? params.get('oobCode') : null;
 
   useEffect(() => {
+    if (isPrivate || resetOobCode) return;
     // Process redirect result if Google Sign-In used redirect mode
     getRedirectResult(auth).catch((err) => {
       console.warn("getRedirectResult warning:", err);
     });
-  }, []);
+  }, [isPrivate, resetOobCode]);
 
   useEffect(() => {
-    if (resetOobCode) {
-      setIsLoading(false);
-      return;
-    }
+    if (isPrivate || resetOobCode) return;
 
     let isMounted = true;
 
@@ -207,9 +188,18 @@ export default function App() {
       isMounted = false;
       unsubscribe();
     };
-  }, [resetOobCode]);
+  }, [isPrivate, resetOobCode]);
 
-  if (isLoading) {
+  if (isPrivate) {
+    return (
+      <>
+        <PrivateChatApp />
+        <Toaster position="bottom-right" />
+      </>
+    );
+  }
+
+  if (isLoading && !resetOobCode) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-muted-foreground bg-[#050505]">
         <div className="w-56 space-y-3">

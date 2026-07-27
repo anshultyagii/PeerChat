@@ -331,6 +331,9 @@ export default function CallModal({
       peerConnectionRef.current = null;
     }
     remove(callDbRef).catch(() => {});
+    // The incoming-call banner lives outside the signaling room. Clear it as
+    // well so a caller who cancels cannot leave the other user stuck ringing.
+    remove(ref(rtdb, `userCalls/${targetUserId}`)).catch(() => {});
   }
 
   return (

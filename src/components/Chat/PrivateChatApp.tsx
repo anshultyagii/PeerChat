@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { rtdb } from '@/lib/firebase';
-import { ref, push, onValue, set, remove, onDisconnect } from 'firebase/database';
+import { ref, push, onValue, set, remove, onDisconnect, get } from 'firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -132,7 +132,7 @@ export default function PrivateChatApp() {
             if (loadedMsgs.length > 0) {
               const lastMsg = loadedMsgs[loadedMsgs.length - 1];
               if (lastMsg.senderPeerId !== myPeerId && lastMsg.timestamp > Date.now() - 3000) {
-                if (localStorage.getItem('notificationsEnabled') === 'true' && Notification.permission === 'granted' && document.hidden) {
+              if (localStorage.getItem('notificationsEnabled') === 'true' && typeof Notification !== 'undefined' && Notification.permission === 'granted' && document.hidden) {
                   new Notification("Private Peer", {
                     body: lastMsg.text,
                   });
@@ -166,9 +166,10 @@ export default function PrivateChatApp() {
     }
   }, [messages]);
 
-  const copyPeerId = () => {
+  const copyPeerId = async () => {
     try {
-      navigator.clipboard.writeText(myPeerId);
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
+      await navigator.clipboard.writeText(myPeerId);
       setCopied(true);
       toast.success("Session ID copied to clipboard!");
       setTimeout(() => setCopied(false), 2000);
@@ -185,8 +186,22 @@ export default function PrivateChatApp() {
       toast.error("Cannot connect to your own Session ID");
       return;
     }
+    if (!/^peer_[a-z0-9]{8}$/i.test(target)) {
+      toast.error("That Session ID is not valid");
+      return;
+    }
 
     try {
+      const targetPresence = await get(ref(rtdb, `privatePeers/${target}`));
+      if (!targetPresence.exists() || !targetPresence.val()?.active) {
+        toast.error("Peer is not available", { description: "Ask them to open Private Chat and share a fresh Session ID." });
+        return;
+      }
+      if (targetPresence.val()?.connectedRoomId) {
+        toast.error("Peer is already in a private session");
+        return;
+      }
+
       const roomId = `room_${[myPeerId, target].sort().join('_')}`;
       const roomRef = ref(rtdb, `privateRooms/${roomId}`);
 
@@ -235,8 +250,8 @@ export default function PrivateChatApp() {
 
 
   return (
-    <SidebarProvider className="h-screen w-screen bg-[#050505] text-white overflow-hidden">
-      <div className="flex h-screen w-full overflow-hidden bg-[#1e1e1e]/40 backdrop-blur-[24px]">
+    <SidebarProvider className="h-svh min-h-svh w-screen bg-[#050505] text-white overflow-hidden">
+      <div className="flex h-svh w-full overflow-hidden bg-[#1e1e1e]/40 backdrop-blur-[24px]">
         <Sidebar collapsible="icon" className="border-r border-white/10 bg-black/40" onClick={(e) => e.stopPropagation()}>
           <SidebarHeader className="h-16 px-4 border-b border-white/10 flex items-center justify-between shrink-0">
             <div className="flex items-center justify-between gap-2 w-full">
@@ -326,14 +341,14 @@ export default function PrivateChatApp() {
         </Sidebar>
 
         <main className="flex-1 flex flex-col min-w-0 h-full bg-black/20">
-          <header className="h-16 px-4 border-b border-white/10 flex items-center justify-between bg-black/20 shrink-0 z-10">
-            <div className="flex items-center gap-3">
+          <header className="h-14 md:h-16 px-3 md:px-4 border-b border-white/10 flex items-center justify-between bg-black/20 shrink-0 z-10">
+            <div className="flex min-w-0 items-center gap-2 md:gap-3">
               <SidebarTrigger />
-              <div className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-emerald-400" />
-                <div>
-                  <h2 className="text-base font-bold text-white">Private Chat Room</h2>
-                  <p className="text-xs text-muted-foreground font-mono">
+              <div className="flex min-w-0 items-center gap-2">
+                <Shield className="w-5 h-5 shrink-0 text-emerald-400" />
+                <div className="min-w-0">
+                  <h2 className="text-sm md:text-base font-bold text-white">Private chat</h2>
+                  <p className="truncate text-xs text-muted-foreground font-mono">
                     {connectedPeerId ? `Peer: ${connectedPeerId}` : 'No peer connected'}
                   </p>
                 </div>
@@ -343,14 +358,12 @@ export default function PrivateChatApp() {
             {/* Connection Status Box in Header Top Right */}
             <div>
               {isConnected ? (
-                <div className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3.5 py-1 rounded-full text-xs font-bold flex items-center gap-2 shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Connected
+                <div className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 md:px-3.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 md:gap-2 shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span className="hidden sm:inline">Connected</span>
                 </div>
               ) : (
-                <div className="bg-red-500/20 text-red-400 border border-red-500/30 px-3.5 py-1 rounded-full text-xs font-bold flex items-center gap-2 shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-red-400"></span>
-                  Disconnected
+                <div className="bg-red-500/20 text-red-400 border border-red-500/30 px-2.5 md:px-3.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 md:gap-2 shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-red-400"></span><span className="hidden sm:inline">Disconnected</span>
                 </div>
               )}
             </div>
@@ -359,7 +372,7 @@ export default function PrivateChatApp() {
           <ScrollArea
             ref={scrollRef}
             onContextMenu={(e) => e.preventDefault()}
-            className="flex-1 p-6 bg-black/10 select-none"
+            className="flex-1 p-3 md:p-6 bg-black/10 select-none"
           >
             {!isConnected ? (
               <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-muted-foreground space-y-4 opacity-70">
@@ -374,13 +387,13 @@ export default function PrivateChatApp() {
                 <p className="text-sm max-w-sm text-center">Private connection established. Say hello!</p>
               </div>
             ) : (
-              <div className="space-y-4 flex flex-col pb-4">
+              <div className="space-y-3 md:space-y-4 flex flex-col pb-3 md:pb-4">
                 {messages.map((msg) => {
                   const isMe = msg.senderPeerId === myPeerId;
                   return (
                     <div key={msg.id} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`flex flex-col gap-1 max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
-                        <div className={`px-4 py-2.5 rounded-2xl text-[16px] md:text-[17px] font-semibold leading-relaxed shadow-sm select-text ${isMe ? 'bg-[#0084ff] text-white rounded-br-xs' : 'bg-[#2a2a2e] border border-white/10 text-white rounded-bl-xs'}`}>
+                      <div className={`flex flex-col gap-1 max-w-[88%] sm:max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
+                        <div className={`px-3.5 py-2 rounded-2xl text-[15px] md:text-[17px] font-medium leading-relaxed shadow-sm select-text ${isMe ? 'bg-[#0084ff] text-white rounded-br-xs' : 'bg-[#2a2a2e] border border-white/10 text-white rounded-bl-xs'}`}>
                           {msg.text}
                         </div>
                       </div>
@@ -391,7 +404,7 @@ export default function PrivateChatApp() {
             )}
           </ScrollArea>
 
-          <footer className="p-4 border-t border-white/10 bg-black/20 shrink-0">
+          <footer className="p-3 md:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-white/10 bg-black/20 shrink-0">
             <form onSubmit={sendMessage} className="flex gap-2 max-w-4xl mx-auto items-center relative">
               <div className="relative flex items-center">
                 <Button
@@ -426,7 +439,7 @@ export default function PrivateChatApp() {
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 disabled={!isConnected}
-                className="flex-1 rounded-full px-6 bg-black/30 border-white/10 text-white text-[15px] font-medium placeholder:text-[#888] focus-visible:bg-white/5 h-11"
+                className="flex-1 rounded-full px-4 md:px-6 bg-black/30 border-white/10 text-white text-[15px] font-medium placeholder:text-[#888] focus-visible:bg-white/5 h-11"
               />
               <Button
                 type="submit"
@@ -488,7 +501,7 @@ export default function PrivateChatApp() {
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
               onClick={() => {
-                copyPeerId();
+                void copyPeerId();
                 setPeerIdModalOpen(false);
               }}
               className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-bold flex items-center justify-center gap-2"

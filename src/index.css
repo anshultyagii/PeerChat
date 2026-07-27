@@ -128,3 +128,12 @@
     @apply font-sans;
     }
 }
+
+/* Decorative landing-page elements are intentionally wider than the viewport.
+   Keep them from turning into a horizontal swipe area on small screens. */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: clip;
+}

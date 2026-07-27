@@ -88,10 +88,10 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
       {/* Header/Navbar */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-[#050505]/75 border-b border-white/5 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 group cursor-pointer" onClick={handleScroll("metrics")}>
-            <MessageSquare className="w-8 h-8 text-emerald-400 group-hover:scale-110 group-hover:text-emerald-300 transition-all duration-300" />
-            <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-white to-neutral-400 bg-clip-text text-transparent">
+            <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-400 group-hover:scale-110 group-hover:text-emerald-300 transition-all duration-300" />
+            <span className="font-bold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-white to-neutral-400 bg-clip-text text-transparent">
               PeerChat
             </span>
           </div>
@@ -105,19 +105,19 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
           <button 
             onClick={onStart}
-            className="relative px-6 py-2.5 rounded-full text-sm font-semibold overflow-hidden group cursor-pointer"
+            className="relative px-4 sm:px-6 py-2.5 rounded-full text-sm font-semibold overflow-hidden group cursor-pointer"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-300 group-hover:opacity-90" />
             <span className="absolute inset-[1.5px] bg-[#0c0c0c] rounded-full group-hover:bg-[#0c0c0c]/80 transition-colors" />
             <span className="relative flex items-center gap-2 text-white group-hover:text-emerald-300 transition-colors">
-              Launch App <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <span className="hidden sm:inline">Launch App</span><span className="sm:hidden">Open</span> <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </span>
           </button>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section id="metrics" className="max-w-7xl mx-auto px-6 pt-12 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+      <section id="metrics" className="max-w-7xl mx-auto px-5 sm:px-6 pt-10 sm:pt-12 pb-16 sm:pb-24 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
         {/* Left Column - Pitch */}
         <div className="lg:col-span-6 space-y-8 text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400 tracking-wide">
@@ -170,7 +170,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         </div>
 
         {/* Right Column - Engaging Live Motion Board */}
-        <div className="lg:col-span-6 flex flex-col gap-6">
+        <div className="hidden lg:flex lg:col-span-6 flex-col gap-6">
           <div className="relative bg-[#0d0d0d] border border-white/10 rounded-[32px] p-6 shadow-2xl overflow-hidden backdrop-blur-xl">
             {/* Glossy overlay effect */}
             <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/[0.02] to-white/0 pointer-events-none" />

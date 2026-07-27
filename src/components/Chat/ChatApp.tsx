@@ -155,7 +155,7 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
         if (loaded.length > 0) {
           const lastMsg = loaded[loaded.length - 1];
           if (lastMsg.sender === 'them' && lastMsg.timestamp > Date.now() - 3000) {
-            if (localStorage.getItem('notificationsEnabled') === 'true' && Notification.permission === 'granted' && document.hidden) {
+            if (localStorage.getItem('notificationsEnabled') === 'true' && typeof Notification !== 'undefined' && Notification.permission === 'granted' && document.hidden) {
               const display = getContactDisplay(activeContact);
               new Notification(`${display.firstName} ${display.lastName}`, {
                 body: lastMsg.text,
@@ -429,7 +429,7 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
   const userDisplay = getContactDisplay(currentUser);
 
   return (
-    <SidebarProvider className="h-svh min-h-svh bg-[#050505] text-white">
+    <SidebarProvider defaultOpenMobile className="h-svh min-h-svh bg-[#050505] text-white">
       <div className="flex h-svh w-full overflow-hidden bg-[#1e1e1e]/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-[24px]">
         <Sidebar collapsible="icon" className="border-r border-white/10 bg-black/20" onClick={(e) => e.stopPropagation()}>
           {/* Header height set to h-16 (64px) to align divider with main chat header */}
@@ -470,6 +470,7 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
                             <SidebarMenuButton
                               isActive={activeContact?.uid === contact.uid}
                               onClick={() => setActiveContact(contact)}
+                              closeMobileOnClick
                               className="h-auto py-2"
                             >
                               <Avatar className="h-8 w-8 shrink-0">
@@ -540,28 +541,28 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
 
         <main className="flex-1 flex flex-col min-w-0 bg-black/20">
           {/* Main header height set to h-16 (64px) to align divider perfectly with sidebar header */}
-          <header className="h-16 px-4 border-b border-white/10 flex items-center justify-between bg-black/20 shrink-0 z-10">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger />
+          <header className="h-14 md:h-16 px-3 md:px-4 border-b border-white/10 flex items-center justify-between bg-black/20 shrink-0 z-10">
+            <div className="flex min-w-0 items-center gap-2 md:gap-3">
+              <SidebarTrigger mobileBack />
               {activeContact && activeDisplay ? (
-                <div className="flex items-center gap-3">
-                  <Avatar>
+                <div className="flex min-w-0 items-center gap-2 md:gap-3">
+                  <Avatar className="h-8 w-8 md:h-10 md:w-10">
                     <AvatarImage src={activeDisplay.profilePic || undefined} />
                     <AvatarFallback className="bg-primary/10 text-primary font-mono">
                       {activeDisplay.firstName[0]}{activeDisplay.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <h2 className="text-base font-bold">{activeDisplay.firstName} {activeDisplay.lastName}</h2>
-                    <p className="text-xs text-muted-foreground font-mono font-medium">@{activeContact.username}</p>
+                  <div className="min-w-0">
+                    <h2 className="truncate text-sm md:text-base font-bold">{activeDisplay.firstName} {activeDisplay.lastName}</h2>
+                    <p className="truncate text-xs text-muted-foreground font-mono font-medium">@{activeContact.username}</p>
                   </div>
                 </div>
               ) : (
-                <div className="text-sm text-muted-foreground">Select a chat to get started</div>
+                <div className="text-sm text-muted-foreground">Choose a chat</div>
               )}
             </div>
             {activeContact && activeDisplay && (
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-0.5 md:gap-2">
                 <Button
                   size="icon"
                   variant="ghost"
@@ -588,7 +589,7 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
           <ScrollArea
             ref={scrollRef}
             onContextMenu={(e) => e.preventDefault()}
-            className="flex-1 p-6 bg-black/10 select-none"
+            className="flex-1 p-3 md:p-6 bg-black/10 select-none"
           >
             {!activeContact ? (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-4 opacity-70 mt-32">
@@ -601,16 +602,16 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
                 <p className="text-sm max-w-sm text-center">Say hello to @{activeContact.username}!</p>
               </div>
             ) : (
-              <div className="space-y-4 flex flex-col pb-4">
+              <div className="space-y-3 md:space-y-4 flex flex-col pb-3 md:pb-4">
                 {messages.map((msg) => {
                   const isMe = msg.sender === 'me';
                   return (
                     <div key={msg.id} className={`flex w-full group ${isMe ? 'justify-end' : 'justify-start'}`}>
                       <ContextMenu>
                         <ContextMenuTrigger asChild>
-                          <div className={`flex flex-col gap-1 max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
+                          <div className={`flex flex-col gap-1 max-w-[88%] sm:max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
                             <div className="relative group/msg flex items-center gap-2">
-                              <div className={`px-4 py-2.5 rounded-2xl text-[16px] md:text-[17px] font-semibold leading-relaxed shadow-sm select-text ${isMe ? 'bg-[#0084ff] text-white rounded-br-xs' : 'bg-[#2a2a2e] border border-white/10 text-white rounded-bl-xs'}`}>
+                              <div className={`px-3.5 py-2 rounded-2xl text-[15px] md:text-[17px] font-medium leading-relaxed shadow-sm select-text ${isMe ? 'bg-[#0084ff] text-white rounded-br-xs' : 'bg-[#2a2a2e] border border-white/10 text-white rounded-bl-xs'}`}>
                                 {msg.text}
                               </div>
 
@@ -619,7 +620,7 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
                                 <button
                                   onClick={() => setActiveEmojiPickerMsgId(activeEmojiPickerMsgId === msg.id ? null : msg.id)}
                                   title="React to message"
-                                  className="opacity-0 group-hover/msg:opacity-100 transition-opacity text-muted-foreground hover:text-white p-1.5 rounded-full hover:bg-white/10 cursor-pointer"
+                                  className="opacity-100 md:opacity-0 md:group-hover/msg:opacity-100 transition-opacity text-muted-foreground hover:text-white p-1.5 rounded-full hover:bg-white/10 cursor-pointer"
                                 >
                                   <Smile className="w-4 h-4" />
                                 </button>
@@ -695,7 +696,7 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
             )}
           </ScrollArea>
 
-          <footer className="p-4 border-t border-white/10 bg-black/20 shrink-0">
+          <footer className="p-3 md:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-white/10 bg-black/20 shrink-0">
             <form onSubmit={sendMessage} className="flex gap-2 max-w-4xl mx-auto items-center relative">
               <div className="relative flex items-center">
                 <Button
@@ -730,7 +731,7 @@ export default function ChatApp({ currentUser: initialUser }: { currentUser: Use
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 disabled={!activeContact}
-                className="flex-1 rounded-full px-6 bg-black/30 border-white/10 text-white text-[15px] font-medium placeholder:text-[#888] focus-visible:bg-white/5 h-11"
+                className="flex-1 rounded-full px-4 md:px-6 bg-black/30 border-white/10 text-white text-[15px] font-medium placeholder:text-[#888] focus-visible:bg-white/5 h-11"
               />
               <Button type="submit" size="icon" className="rounded-full h-10 w-10 shrink-0 shadow-md" disabled={!messageInput.trim() || !activeContact}>
                 <Send className="w-4 h-4 ml-0.5" />
