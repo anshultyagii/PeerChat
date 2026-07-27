@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { ref, set, onValue, update, remove, push } from 'firebase/database';
+import { ref, set, onValue, update, remove, push, onChildAdded } from 'firebase/database';
 import { rtdb } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -41,6 +41,7 @@ export default function CallModal({
   const [callStatus, setCallStatus] = useState<'ringing' | 'connecting' | 'connected' | 'ended' | 'rejected'>('ringing');
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
 
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
@@ -48,6 +49,12 @@ export default function CallModal({
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
 
   const callDbRef = ref(rtdb, `calls/${roomId}`);
 
@@ -191,9 +198,7 @@ export default function CallModal({
       pc.ontrack = (event) => {
         if (event.streams && event.streams[0]) {
           remoteStreamRef.current = event.streams[0];
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = event.streams[0];
-          }
+          setRemoteStream(event.streams[0]);
           setCallStatus('connected');
         }
       };
@@ -242,14 +247,12 @@ export default function CallModal({
         });
 
         // Listen for receiver's ICE candidates
-        onValue(ref(rtdb, `calls/${roomId}/receiverCandidates`), (snapshot) => {
+        onChildAdded(ref(rtdb, `calls/${roomId}/receiverCandidates`), (snapshot) => {
           if (snapshot.exists()) {
-            snapshot.forEach((child) => {
-              const candidate = child.val();
-              pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(err => 
-                console.warn("Error adding receiver candidate:", err)
-              );
-            });
+            const candidate = snapshot.val();
+            pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(err => 
+              console.warn("Error adding receiver candidate:", err)
+            );
           }
         });
       } else {
@@ -273,14 +276,12 @@ export default function CallModal({
         });
 
         // Listen for caller's ICE candidates
-        onValue(ref(rtdb, `calls/${roomId}/callerCandidates`), (snapshot) => {
+        onChildAdded(ref(rtdb, `calls/${roomId}/callerCandidates`), (snapshot) => {
           if (snapshot.exists()) {
-            snapshot.forEach((child) => {
-              const candidate = child.val();
-              pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(err => 
-                console.warn("Error adding caller candidate:", err)
-              );
-            });
+            const candidate = snapshot.val();
+            pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(err => 
+              console.warn("Error adding caller candidate:", err)
+            );
           }
         });
       }
