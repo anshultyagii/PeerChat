@@ -44,7 +44,7 @@ export default function ProfileModal({
       toast.success("Notifications disabled");
     } else {
       if (!("Notification" in window)) {
-        toast.error("This browser does not support desktop notifications");
+        toast.error("This browser does not support notifications");
         return;
       }
       const permission = await Notification.requestPermission();
@@ -52,7 +52,7 @@ export default function ProfileModal({
         localStorage.setItem('notificationsEnabled', 'true');
         setNotificationsEnabled(true);
         new Notification("Notifications Enabled", {
-          body: "You will now receive desktop notifications for new messages.",
+          body: "You will now receive notifications for new messages.",
         });
       } else {
         toast.error("Notification permission denied");
