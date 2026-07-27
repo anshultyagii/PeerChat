@@ -18,6 +18,14 @@ interface LandingPageProps {
 }
 
 export default function LandingPage({ onStart }: LandingPageProps) {
+  const handleScroll = (id: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   // Motion simulation state
   const [activeStep, setActiveStep] = useState(0);
   const [latencyHistory, setLatencyHistory] = useState<number[]>([12, 15, 8, 10, 6, 7, 5]);
@@ -81,22 +89,18 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* Header/Navbar */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-[#050505]/75 border-b border-white/5 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-400 p-[1.5px] shadow-[0_0_20px_rgba(16,185,129,0.3)] group-hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transition-all duration-300">
-              <div className="w-full h-full bg-[#0d0d0d] rounded-[10px] flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
-              </div>
-            </div>
+          <div className="flex items-center gap-3 group cursor-pointer" onClick={handleScroll("metrics")}>
+            <MessageSquare className="w-8 h-8 text-emerald-400 group-hover:scale-110 group-hover:text-emerald-300 transition-all duration-300" />
             <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-white to-neutral-400 bg-clip-text text-transparent">
               PeerChat
             </span>
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-400">
-            <a href="#features" className="hover:text-emerald-400 transition-colors">Features</a>
-            <a href="#tech" className="hover:text-emerald-400 transition-colors">Tech Stack</a>
-            <a href="#security" className="hover:text-emerald-400 transition-colors">Security</a>
-            <a href="#metrics" className="hover:text-emerald-400 transition-colors">Architecture</a>
+            <a href="#features" onClick={handleScroll("features")} className="hover:text-emerald-400 transition-colors">Features</a>
+            <a href="#tech" onClick={handleScroll("tech")} className="hover:text-emerald-400 transition-colors">Tech Stack</a>
+            <a href="#security" onClick={handleScroll("security")} className="hover:text-emerald-400 transition-colors">Security</a>
+            <a href="#metrics" onClick={handleScroll("metrics")} className="hover:text-emerald-400 transition-colors">Architecture</a>
           </nav>
 
           <button 
@@ -113,7 +117,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       </header>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 pt-12 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+      <section id="metrics" className="max-w-7xl mx-auto px-6 pt-12 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
         {/* Left Column - Pitch */}
         <div className="lg:col-span-6 space-y-8 text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400 tracking-wide">
@@ -338,7 +342,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       </section>
 
       {/* Media Capabilties Showcase */}
-      <section className="max-w-7xl mx-auto px-6 py-12 text-center">
+      <section id="security" className="max-w-7xl mx-auto px-6 py-12 text-center">
         <div className="bg-gradient-to-tr from-emerald-500/5 to-cyan-500/5 border border-white/10 rounded-[36px] p-8 md:p-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-6 text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/20 text-xs font-semibold text-emerald-400">
