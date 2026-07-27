@@ -1,6 +1,3 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <!-- Beautiful transparent emerald chatbox icon -->
-  <path d="M448 352c0 17.6-14.4 32-32 32H128l-80 80V96c0-17.6 14.4-32 32-32h336c17.6 0 32 14.4 32 32v256z" fill="#10b981"/>
-  <!-- White details inside -->
-  <path d="M160 160h192M160 256h128" stroke="#ffffff" stroke-width="32" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
 </svg>
