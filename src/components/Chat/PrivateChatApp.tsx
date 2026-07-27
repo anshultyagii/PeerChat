@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { rtdb } from '@/lib/firebase';
-import { ref, push, onValue, set, remove, onDisconnect, update } from 'firebase/database';
+import { ref, push, onValue, set, remove, onDisconnect } from 'firebase/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -17,10 +17,9 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { Send, Plus, MessageSquare, Shield, Copy, Check, User, LogIn, Home, ChevronsUpDown, Smile, Phone, PhoneOff, Video } from 'lucide-react';
+import { Send, Plus, MessageSquare, Shield, Copy, Check, User, LogIn, Home, ChevronsUpDown, Smile } from 'lucide-react';
 import { toast } from 'sonner';
 import EmojiPicker from './EmojiPicker';
-import CallModal from './CallModal';
 
 const DEFAULT_MAN_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%232a2a2e'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%238e8e93'/%3E%3Cpath d='M20 88 c0 -18 14 -28 30 -28 s30 10 30 28 z' fill='%238e8e93'/%3E%3C/svg%3E";
 
@@ -45,20 +44,6 @@ export default function PrivateChatApp() {
   const [peerIdModalOpen, setPeerIdModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showInputEmojiPicker, setShowInputEmojiPicker] = useState(false);
-  const [incomingCall, setIncomingCall] = useState<{
-    callerId: string;
-    callerName: string;
-    callerUsername: string;
-    type: 'voice' | 'video';
-    roomId: string;
-  } | null>(null);
-  const [activeCall, setActiveCall] = useState<{
-    targetUserId: string;
-    targetUsername: string;
-    isCaller: boolean;
-    type: 'voice' | 'video';
-    roomId: string;
-  } | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -77,24 +62,6 @@ export default function PrivateChatApp() {
     }
   }, [myPeerId]);
 
-  // Listen for incoming calls
-  useEffect(() => {
-    const userCallRef = ref(rtdb, `userCalls/${myPeerId}`);
-    const unsubscribe = onValue(userCallRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const call = snapshot.val();
-        if (call.status === 'ringing') {
-          setIncomingCall(call);
-        } else {
-          setIncomingCall(null);
-        }
-      } else {
-        setIncomingCall(null);
-      }
-    });
-
-    return unsubscribe;
-  }, [myPeerId]);
 
   // Listen to peer presence updates (if someone connects to us)
   useEffect(() => {
@@ -265,51 +232,7 @@ export default function PrivateChatApp() {
     }
   };
 
-  const startCall = (type: 'voice' | 'video') => {
-    if (!isConnected || !connectedPeerId || !activeRoomId) return;
-    
-    setActiveCall({
-      targetUserId: connectedPeerId,
-      targetUsername: 'peer',
-      isCaller: true,
-      type,
-      roomId: activeRoomId,
-    });
 
-    set(ref(rtdb, `userCalls/${connectedPeerId}`), {
-      callerId: myPeerId,
-      callerName: "Anonymous Peer",
-      callerUsername: "peer",
-      type,
-      roomId: activeRoomId,
-      status: 'ringing',
-    }).catch(err => console.error("Error setting caller notification:", err));
-  };
-
-  const acceptCall = () => {
-    if (!incomingCall) return;
-    const call = incomingCall;
-    
-    set(ref(rtdb, `userCalls/${myPeerId}`), null);
-    setIncomingCall(null);
-
-    setActiveCall({
-      targetUserId: call.callerId,
-      targetUsername: 'peer',
-      isCaller: false,
-      type: call.type,
-      roomId: call.roomId,
-    });
-  };
-
-  const rejectCall = () => {
-    if (!incomingCall) return;
-    const call = incomingCall;
-    
-    update(ref(rtdb, `calls/${call.roomId}`), { status: 'rejected' });
-    set(ref(rtdb, `userCalls/${myPeerId}`), null);
-    setIncomingCall(null);
-  };
 
   return (
     <SidebarProvider className="h-screen w-screen bg-[#050505] text-white overflow-hidden">
@@ -417,30 +340,8 @@ export default function PrivateChatApp() {
               </div>
             </div>
 
-            {/* Connection Status Box & Call Buttons in Header Top Right */}
-            <div className="flex items-center gap-4">
-              {isConnected && connectedPeerId && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => startCall('voice')}
-                    className="rounded-full text-muted-foreground hover:text-white hover:bg-white/10 cursor-pointer"
-                    title="Voice Call"
-                  >
-                    <Phone className="w-[18px] h-[18px]" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => startCall('video')}
-                    className="rounded-full text-muted-foreground hover:text-white hover:bg-white/10 cursor-pointer"
-                    title="Video Call"
-                  >
-                    <Video className="w-[18px] h-[18px]" />
-                  </Button>
-                </div>
-              )}
+            {/* Connection Status Box in Header Top Right */}
+            <div>
               {isConnected ? (
                 <div className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3.5 py-1 rounded-full text-xs font-bold flex items-center gap-2 shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -597,60 +498,6 @@ export default function PrivateChatApp() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Incoming Call Ringing Overlay */}
-      {incomingCall && (
-        <div className="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-black/90 text-white p-6 font-sans">
-          <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 via-[#0c0c0e] to-cyan-500/5 pointer-events-none" />
-          <div className="flex flex-col items-center justify-center gap-6 my-12 animate-bounce">
-            <Avatar className="h-32 w-32 ring-8 ring-emerald-500/20">
-              <AvatarFallback className="text-4xl bg-white/10">{incomingCall.callerName[0]}</AvatarFallback>
-            </Avatar>
-            <div className="text-center space-y-1">
-              <h2 className="text-2xl font-extrabold">{incomingCall.callerName}</h2>
-              <p className="text-sm text-muted-foreground font-mono">@{incomingCall.callerUsername}</p>
-              <span className="inline-block mt-3 text-xs bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full font-bold uppercase tracking-wider animate-pulse">
-                Incoming {incomingCall.type} Call...
-              </span>
-            </div>
-          </div>
- 
-          <div className="flex items-center gap-6 z-30">
-            <Button
-              onClick={acceptCall}
-              className="h-14 px-8 rounded-full bg-emerald-500 hover:bg-emerald-600 text-black font-bold flex items-center gap-2 cursor-pointer shadow-lg"
-            >
-              <Phone className="w-5 h-5 animate-pulse" /> Accept
-            </Button>
-            <Button
-              onClick={rejectCall}
-              variant="destructive"
-              className="h-14 px-8 rounded-full bg-[#ff4d4d] hover:bg-[#ff3333] text-white font-bold flex items-center gap-2 cursor-pointer shadow-lg"
-            >
-              <PhoneOff className="w-5 h-5" /> Reject
-            </Button>
-          </div>
-        </div>
-      )}
- 
-      {/* Active Call Modal */}
-      {activeCall && (
-        <CallModal
-          currentUserId={myPeerId}
-          currentUsername="peer"
-          currentUserDisplay={{ firstName: 'Anonymous', lastName: 'Peer', profilePic: null }}
-          targetUserId={activeCall.targetUserId}
-          targetUsername="peer"
-          targetUserDisplay={{
-            firstName: incomingCall?.callerName.split(' ')[0] || 'Anonymous',
-            lastName: incomingCall?.callerName.split(' ').slice(1).join(' ') || 'Peer',
-            profilePic: null,
-          }}
-          roomId={activeCall.roomId}
-          isCaller={activeCall.isCaller}
-          callType={activeCall.type}
-          onClose={() => setActiveCall(null)}
-        />
-      )}
     </SidebarProvider>
   );
 }

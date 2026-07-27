@@ -439,9 +439,9 @@ export default function CallModal({
           onClick={endCall}
           variant="destructive"
           size="icon"
-          className="h-12 w-12 rounded-full bg-[#ff4d4d] hover:bg-[#ff3333] cursor-pointer"
+          className="h-12 w-12 rounded-full bg-[#ff4d4d] hover:bg-[#ff3333] cursor-pointer text-white"
         >
-          <PhoneOff className="w-5 h-5" />
+          <PhoneOff className="w-5 h-5 text-white" />
         </Button>
       </div>
     </div>
